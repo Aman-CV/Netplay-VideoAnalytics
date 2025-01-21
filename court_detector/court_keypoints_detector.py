@@ -1,5 +1,6 @@
 import cv2
 
+# TODO: Make it automated
 class CourtKeyPointsDetector:
     def __init__(self):
         self.__keypoints = [293, 659, 987, 659, 416, 305, 863, 305]

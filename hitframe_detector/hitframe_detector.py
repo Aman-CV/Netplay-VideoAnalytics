@@ -52,22 +52,22 @@ class HitFrameDetector:
             if i + sliding_window > len(video_frames): break
             clip = video_frames[i: i + sliding_window]
             inference_output.append(self.inference_from_frames(clip))
-        riop = [(-1, -1)]
+        refined_inference_output = [(-1, -1)]
         for i in range(0, len(inference_output), 1):
             clip = inference_output[i: i + 5]
             a, b, n = clip.count(0), clip.count(1), clip.count(2)
             if a > 2:
-                if riop[-1][0] != 0:
-                    riop.append((0, i + 5))
+                if refined_inference_output[-1][0] != 0:
+                    refined_inference_output.append((0, i + 5))
                 else:
-                    riop[-1] = (0, i)
+                    refined_inference_output[-1] = (0, i)
             elif b > 2:
-                if riop[-1][0] != 1:
-                    riop.append((1, i + 5))
+                if refined_inference_output[-1][0] != 1:
+                    refined_inference_output.append((1, i + 5))
                 else:
-                    riop[-1] = (1, i)
+                    refined_inference_output[-1] = (1, i)
             else: continue
-        inference_output = riop[1:]
+        inference_output = refined_inference_output[1:]
         if stub_path is not None:
             with open(stub_path, 'wb') as f:
                 # noinspection PyTypeChecker
@@ -81,7 +81,7 @@ class HitFrameDetector:
             blue, green, red = cv2.split(video_frame[frame_no])
 
             # Increase the intensity of the green channel
-            green = cv2.add(green, 50)  # You can adjust this value for stronger/softer effect
+            green = cv2.add(green, 50)
 
             # Ensure the values stay within the valid range [0, 255]
             green = np.clip(green, 0, 255)
