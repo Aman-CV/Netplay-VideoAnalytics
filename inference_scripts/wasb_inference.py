@@ -1,9 +1,7 @@
-import os
 import cv2
 import torch
 import torchvision.transforms as transforms
 import numpy as np
-import pandas as pd
 from model_definations.wasb import HRNet
 
 def preprocess_frame(frame, transform):
@@ -19,7 +17,7 @@ def predict_ball_position(prev_positions, width, height):
     predicted_position = np.clip(predicted_position, [0, 0], [width, height])
     return predicted_position
 
-def run_inference(weights, input_path):
+def run_inference(weights, input_path, confidence_threshold=30.):
     config = {
         "name": "hrnet",
         "frames_in": 3,
@@ -97,7 +95,6 @@ def run_inference(weights, input_path):
 
     cap = cv2.VideoCapture(input_path)
 
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
@@ -162,10 +159,10 @@ def run_inference(weights, input_path):
                         prev_positions.pop(0)
 
                 # Write the frame to the output video and save the coordinates
-                if detected:
+                if detected and confidence > confidence_threshold:
                     coordinates.append([frame_number, 1, center_x, center_y, confidence])
                 else:
-                    coordinates.append([frame_number, 0, -1, -1, 0])
+                    coordinates.append([frame_number, 0, center_x, center_y, confidence])
 
                 frame_number += 1
             frames_buffer = []  # Clear the buffer for the next set of frames

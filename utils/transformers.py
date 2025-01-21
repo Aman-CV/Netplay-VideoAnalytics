@@ -25,6 +25,39 @@ class Transformer:
 
 
 
+class VideoTransform:
+    def __init__(self, num_frames=8, resize=(160, 160)):
+        self.num_frames = num_frames
+        self.resize = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(resize),
+            transforms.ToTensor(),
+        ])
+        self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+
+    def __call__(self, video):
+        T, H, W, C = video.shape
+
+        # Handle frame sampling or padding
+        if T > self.num_frames:
+            indices = torch.linspace(0, T - 1, self.num_frames).long()
+            video = video[indices]
+        elif T < self.num_frames:
+            pad = self.num_frames - T
+            padding = video[-1:].repeat(pad, 1, 1, 1)
+            video = torch.cat([video, padding], dim=0)
+
+        # Transform each frame
+        transformed_frames = []
+        for frame in video:
+            frame = frame.permute(2, 0, 1)  # Convert to [C, H, W] format
+            frame = self.resize(frame)  # Apply resize
+            frame = self.normalize(frame)  # Normalize the frame
+            transformed_frames.append(frame)
+
+        video = torch.stack(transformed_frames)  # [T, C, H, W]
+        return video
+
 if __name__ == "__main__":
     pass
     # input_videos_path = "../input_videos/input_video.mp4"
