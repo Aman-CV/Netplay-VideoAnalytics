@@ -5,24 +5,28 @@ from constants import Directories, BadmintonCourtDimensions
 from utils import (save_video,
                    read_video,
                    draw_frame_number,
+                   get_meta_data,
+                   Transformer
 )
 from court_detector import CourtKeyPointsDetector
 from hitframe_detector import HitFrameDetector
 from rally import Rally
 import pandas as pd
+from constants import DataParam
 
 
 def main():
     _DIR = Directories()
     _DIMENSIONS = BadmintonCourtDimensions()
+    _DATA_PARAM = DataParam()
     real_court_keypoints = _DIMENSIONS.get_dimension_coordinates()
-
     # Get court keypoints
     court_keypoints_detector = CourtKeyPointsDetector()
     court_keypoints = court_keypoints_detector.get_court_keypoints()
 
     input_video_path = "{x}Test/match3/video/1_02_00.mp4".format(x=_DIR.INPUT_DIR)
     output_video_path = "{x}output.mp4".format(x=_DIR.OUTPUT_DIR)
+    fps, width, height = get_meta_data(input_video_path)
     video_frames = read_video(input_video_path)
 
     # Get Player positions
@@ -56,7 +60,7 @@ def main():
     print(hitframe_detections, len(hitframe_detections))
 
     # Rally
-    rally_seq = Rally(player_detections, shuttle_detections, hitframe_detections, court_keypoints)
+    rally_seq = Rally(player_detections, shuttle_detections, hitframe_detections, court_keypoints, real_court_keypoints, fps)
 
     # draw over video_frames
     shuttle_tracker.draw_circle(video_frames, shuttle_detections, True)
@@ -65,7 +69,7 @@ def main():
     hitframe_detector.mark_hitframes(hitframe_detections, video_frames)
     # mark frame
     draw_frame_number(video_frames)
-
+    rally_seq.draw_statistics_on_video(video_frames, _DATA_PARAM.speed)
     # Save Video
     save_video(video_frames, output_video_path)
 
