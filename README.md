@@ -1,13 +1,13 @@
 # BADMINTON ANALYSIS
 
 
-| Jobs  | File | Double | Singles | Approach | Comments |
-| --- | --- | --- | --- | --- | --- |
-| Player Tracking  | [Player Tracker](https://github.com/notcamelcase01/BadmintonCoachAI/blob/99eb3e7e93660b6be792be941231aea293f13ad2/trackers/player_tracker.py)  | ✅ | ✅ | YOLOv11.track pretrained | Tracks player effectively throught the video |
-| Shuttle Tracking  | [Shuttle Tracker](https://github.com/notcamelcase01/BadmintonCoachAI/blob/99eb3e7e93660b6be792be941231aea293f13ad2/trackers/shuttle_tracker.py)  | ✅ | ✅ | WASB pretrained | Tracks shuttle effectively , however interpolation is pending when shuttle is out of camera view |
-| Hit Frame | [Hit frame detector](https://github.com/notcamelcase01/BadmintonCoachAI/blob/99eb3e7e93660b6be792be941231aea293f13ad2/hitframe_detector/hitframe_detector.py) | ✅| :x: | X3D video classification fined tuned | 82% efficiency , yet to train with complete data |
-| Court Key Point Detection | [Court key point detector](https://github.com/notcamelcase01/BadmintonCoachAI/blob/99eb3e7e93660b6be792be941231aea293f13ad2/court_detector/court_keypoints_detector.py) | :x: | :x: | Currently adding key points manully | Yet to prepare data and train RestNet model for point detection |
-| Rally Separation | Pending... | :x: | :x: | Pending... | **Not much data available to test out possible solution** |
+| Jobs  | File | Singles | Double | Approach | Comments |
+| --- | --- |---------|--------| --- | --- |
+| Player Tracking  | [Player Tracker](https://github.com/notcamelcase01/BadmintonCoachAI/blob/99eb3e7e93660b6be792be941231aea293f13ad2/trackers/player_tracker.py)  | ✅       | ✅      | YOLOv11.track pretrained | Tracks player effectively throught the video |
+| Shuttle Tracking  | [Shuttle Tracker](https://github.com/notcamelcase01/BadmintonCoachAI/blob/99eb3e7e93660b6be792be941231aea293f13ad2/trackers/shuttle_tracker.py)  | ✅       | ✅      | WASB pretrained | Tracks shuttle effectively , however interpolation is pending when shuttle is out of camera view |
+| Hit Frame | [Hit frame detector](https://github.com/notcamelcase01/BadmintonCoachAI/blob/99eb3e7e93660b6be792be941231aea293f13ad2/hitframe_detector/hitframe_detector.py) | ✅       | :x:    | X3D video classification fined tuned | 82% efficiency , yet to train with complete data |
+| Court Key Point Detection | [Court key point detector](https://github.com/notcamelcase01/BadmintonCoachAI/blob/99eb3e7e93660b6be792be941231aea293f13ad2/court_detector/court_keypoints_detector.py) | :x:     | :x:    | Currently adding key points manully | Yet to prepare data and train RestNet model for point detection |
+| Rally Separation | Pending... | :x:     | :x:    | Pending... | **Not much data available to test out possible solution** |
 
 ---
 
