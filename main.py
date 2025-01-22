@@ -1,5 +1,3 @@
-from fontTools.cffLib import encodeNumber
-
 from trackers import ShuttleTracker, PlayerTracker
 from constants import Directories, BadmintonCourtDimensions
 from utils import (save_video,
