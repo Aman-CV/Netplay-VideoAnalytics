@@ -21,9 +21,9 @@ def read_video(video_path):
     cap.release()
     return frames
 
-def save_video(output_video_frames, output_video_path):
+def save_video(output_video_frames, output_video_path, fps = 30):
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_video_path, fourcc, 24, (output_video_frames[0].shape[1], output_video_frames[0].shape[0]))
+    out = cv2.VideoWriter(output_video_path, fourcc, fps, (output_video_frames[0].shape[1], output_video_frames[0].shape[0]))
     for frame in output_video_frames:
         out.write(frame)
     out.release()
@@ -46,7 +46,11 @@ class VideoTransform:
             transforms.Resize(resize),
             transforms.ToTensor(),
         ])
+
         self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+
+    def crop(self, frame, identifier_):
+        pass
 
     def __call__(self, video):
         T, H, W, C = video.shape
@@ -56,9 +60,15 @@ class VideoTransform:
             indices = torch.linspace(0, T - 1, self.num_frames).long()
             video = video[indices]
         elif T < self.num_frames:
-            pad = self.num_frames - T
-            padding = video[-1:].repeat(pad, 1, 1, 1)
-            video = torch.cat([video, padding], dim=0)
+            result = [item for item in video for _ in range(2)]
+            if len(result) < self.num_frames:
+              padding_frames = self.num_frames - T
+              last_frame = video[-1].unsqueeze(0).repeat(padding_frames, 1, 1, 1)
+              video = torch.cat([video, last_frame], dim=0)
+            else:
+              video = result
+
+
 
         # Transform each frame
         transformed_frames = []
@@ -70,3 +80,4 @@ class VideoTransform:
 
         video = torch.stack(transformed_frames)  # [T, C, H, W]
         return video
+

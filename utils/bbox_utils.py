@@ -30,3 +30,27 @@ def get_height_of_bbox(bbox):
 def measure_xy_distance(p1, p2):
     return abs(p1[0] - p2[0]), abs(p1[1] - p2[1])
 
+def expand_bbox(x1, y1, x2, y2, image_width=1280, image_height=720, scale=1.4):
+    width = x2 - x1
+    height = y2 - y1
+
+    # Increase width and height by scale factor
+    new_width = width * scale
+    new_height = height * scale
+
+    # Find center of the bounding box
+    cx, cy = x1 + width // 2, y1 + height // 2
+
+    # Compute new x1, y1, x2, y2
+    x1_new = int(cx - new_width // 2)
+    y1_new = int(cy - new_height // 2)
+    x2_new = int(cx + new_width // 2)
+    y2_new = int(cy + new_height // 2)
+
+    # Ensure the new bounding box is within image bounds
+    x1_new = max(0, x1_new)
+    y1_new = max(0, y1_new)
+    x2_new = min(image_width, x2_new)
+    y2_new = min(image_height, y2_new)
+
+    return x1_new, y1_new, x2_new, y2_new

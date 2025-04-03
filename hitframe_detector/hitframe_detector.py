@@ -1,4 +1,4 @@
-from pytorchvideo.models.hub import x3d_m
+from pytorchvideo.models.hub import x3d_l
 from torchvision.io import read_video
 import torch.nn as nn
 import torch
@@ -11,8 +11,8 @@ _DIR = Directories()
 
 class HitFrameDetector:
     def __init__(self, model_path):
-        self.video_transform = VideoTransform(num_frames=16, resize=(224, 224))
-        self.model = x3d_m(pretrained=False)
+        self.video_transform = VideoTransform(num_frames=16, resize=(312, 312))
+        self.model = x3d_l(pretrained=False)
         self.num_classes = 3
         self.model.blocks[-1].proj = nn.Linear(in_features=2048, out_features=self.num_classes)
         self.model.load_state_dict(torch.load(model_path))
@@ -66,6 +66,16 @@ class HitFrameDetector:
                     refined_inference_output.append((1, i + 5))
                 else:
                     refined_inference_output[-1] = (1, i)
+            # elif sa > 2:
+            #     if refined_inference_output[-1][0] != 3:
+            #         refined_inference_output.append((3, i + 5))
+            #     else:
+            #         refined_inference_output[-1] = (3, i)
+            # elif sb > 4:
+            #     if refined_inference_output[-1][0] != 4:
+            #         refined_inference_output.append((4, i + 5))
+            #     else:
+            #         refined_inference_output[-1] = (4, i)
             else: continue
         inference_output = refined_inference_output[1:]
         if stub_path is not None:

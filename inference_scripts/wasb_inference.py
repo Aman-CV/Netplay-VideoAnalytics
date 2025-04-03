@@ -80,7 +80,7 @@ def run_inference(weights, input_path, confidence_threshold=30.):
     }
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
-
+    print(device)
     transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.Resize((config['inp_height'], config['inp_width'])),
@@ -159,7 +159,7 @@ def run_inference(weights, input_path, confidence_threshold=30.):
                         prev_positions.pop(0)
 
                 # Write the frame to the output video and save the coordinates
-                if detected and confidence > confidence_threshold:
+                if detected:
                     coordinates.append([frame_number, 1, center_x, center_y, confidence])
                 else:
                     coordinates.append([frame_number, 0, center_x, center_y, confidence])

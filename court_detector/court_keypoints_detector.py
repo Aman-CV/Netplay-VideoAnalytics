@@ -5,11 +5,13 @@ class CourtKeyPointsDetector:
     def __init__(self):
         self.__keypoints = [293, 659, 987, 659, 416, 305, 863, 305]
         self.__center = [sum(self.__keypoints[i] for i in range(0, len(self.__keypoints), 2)) / len(self.__keypoints[::2]),
-                                sum(self.__keypoints[i] for i in range(1, len(self.__keypoints), 2)) / len(self.__keypoints[::2])]
-
+                                 sum(self.__keypoints[i] for i in range(1, len(self.__keypoints), 2)) / len(self.__keypoints[::2])]
+        # self.__center = [640, 360]
     def get_court_keypoints(self):
         return self.__keypoints
 
+    def set_keypoints(self, kpts):
+        self.__keypoints = kpts
     def get_center(self):
         return self.__center
 

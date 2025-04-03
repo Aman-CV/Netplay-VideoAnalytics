@@ -1,17 +1,24 @@
 from inference_scripts.wasb_inference import run_inference as wasb_inference
+from inference_scripts.tracknetv2_inference import run_inference as tracknetv2_inference
 import cv2
 import pickle
 import numpy as np
 import pandas as pd
+from constants import  Directories
+DIR_ = Directories()
 # Map models to their corresponding inference functions, I am using only wasb, if needed more we can add here check out WASB gitHub repo
 MODEL_INFERENCE_MAP = {
-    "wasb": wasb_inference
+    "wasb": wasb_inference,
+    "tnet": tracknetv2_inference
 }
-
+MODEL_PATH_MAP = {
+    "wasb": "wasb_badminton_best.pth.tar",
+    "tnet": "tracknetv2_badminton_best.pth.tar"
+}
 class ShuttleTracker:
-    def __init__(self, model_path):
-        self.model_path = model_path
-        self.__inference_function = MODEL_INFERENCE_MAP["wasb"]
+    def __init__(self, model):
+        self.model_path = DIR_.MODEL_DIR + MODEL_PATH_MAP[model]
+        self.__inference_function = MODEL_INFERENCE_MAP[model]
         self.__is_interpolated = False
 
     def get_hit_frame(self, shuttle_detections):
@@ -36,12 +43,11 @@ class ShuttleTracker:
         return ball_detections
 
     def draw_circle(self, video_frames, shuttle_detections, is_interpolated=True):
-        self.__is_interpolated = True
         for frame, shuttle_detection in zip(video_frames, shuttle_detections):
             frame_num, is_detected, x, y, cnf = shuttle_detection
-            if is_interpolated or is_detected:
+            if is_detected or self.__is_interpolated:
                 cv2.circle(frame,[int(x), int(y)], radius=5, color=(255, 255, 255), thickness=2)
-            cv2.putText(frame, f"Confidence of shuttle detection: {round(cnf, 2)}", (800, 640), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            #cv2.putText(frame, f"Confidence of shuttle detection: {round(cnf, 2)}", (800, 640), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
     def interpolate_shuttle_position(self, shuttle_detections):
         np_shuttle_detections = np.array(shuttle_detections, dtype=np.float32)
@@ -56,7 +62,15 @@ class ShuttleTracker:
         self.__is_interpolated = True
         return np_shuttle_detections.tolist()
 
-
+    def detect_outofview(self, shuttle_detections):
+        flag = False
+        for i in range(1, len(shuttle_detections)):
+            frame_num, is_detected, x, y, cnf = shuttle_detections[i]
+            _, _, _, y_prev, _ = shuttle_detections[i - 1]
+            if not is_detected and y_prev < 20:
+                is_detected = True
+                y = y_prev
+        return shuttle_detections
 
 
 

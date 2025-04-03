@@ -37,10 +37,9 @@ class Rally:
             speed = 0
             if i != 0:
                 prev_pos = self.rally_data_table[-1][self._DATA_PARAM.transformed_x: self._DATA_PARAM.transformed_y + 1]
-                print(prev_pos, real_shooter_position, fps)
                 distance = np.sqrt((real_shooter_position[0] - prev_pos[0]) ** 2 + (real_shooter_position[1] - prev_pos[1]) ** 2)
                 time = (frame_no  - self.rally_data_table[-1][self._DATA_PARAM.frame_no]) / fps
-                speed = distance / time
+                speed = distance / time * 18.0 / 5.0
             self.rally_data_table.append([i, player_who_took_shot, shooter_position[0], shooter_position[1], frame_no, real_shooter_position[0], real_shooter_position[1], distance, time, speed])
         self.rally_data_table = np.array(self.rally_data_table)
         df = pd.DataFrame(self.rally_data_table, columns=self._DATA_PARAM.column_list)
