@@ -39,19 +39,23 @@ class HitFrameDetector:
             outputs = self.model(video)
             predictions = torch.argmax(outputs, dim=1)
 
-        return predictions.item()  # Return the predicted class index
+        return predictions.item(), outputs  # Return the predicted class index
+
 
     def get_hiframes(self, video_frames, read_from_stub=False, stub_path=None):
         inference_output = []
+        probabilities = np.zeros(len(video_frames))
         if read_from_stub and stub_path is not None:
             with open(stub_path, 'rb') as f:
-                inference_output = pickle.load(f)
-            return inference_output
-        sliding_window = 8
+                obj = pickle.load(f)
+            return obj
+        sliding_window = 16
         for i in range(0, len(video_frames) - sliding_window, 1):
             if i + sliding_window > len(video_frames): break
             clip = video_frames[i: i + sliding_window]
-            inference_output.append(self.inference_from_frames(clip))
+            p, prob = self.inference_from_frames(clip)
+            inference_output.append(p)
+            probabilities[i + sliding_window // 2] = 1.0 - (prob[0, -1].cpu().numpy())
         refined_inference_output = [(-1, -1)]
         for i in range(0, len(inference_output), 1):
             clip = inference_output[i: i + 5]
@@ -77,12 +81,11 @@ class HitFrameDetector:
             #     else:
             #         refined_inference_output[-1] = (4, i)
             else: continue
-        inference_output = refined_inference_output[1:]
         if stub_path is not None:
             with open(stub_path, 'wb') as f:
                 # noinspection PyTypeChecker
-                pickle.dump(inference_output, f)
-        return inference_output
+                pickle.dump([refined_inference_output[1:], probabilities], f)
+        return refined_inference_output[1:], probabilities
 
     @staticmethod
     def mark_hitframes(hitframe_detections, video_frame):

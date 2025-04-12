@@ -78,7 +78,7 @@ def read_frame_input_from_checkpoints(path_to_checkpoint):
         return frame_ips
 
 
-def create_data_with_serve(video_frames, frame_inputs, sliding_window=8, base_name="", stride=5, pt=None, id_ = None):
+def create_data_with_serve(video_frames, frame_inputs, sliding_window=16, base_name="", stride=16, pt=None, id_ = None):
     flag_folder = random.randint(1, 5)
     folder_type = "train/"
     if flag_folder == 5: folder_type = "val/"
@@ -91,7 +91,6 @@ def create_data_with_serve(video_frames, frame_inputs, sliding_window=8, base_na
 
        # player_detections = pt.choose_and_filter_players([640, 360],
        #                                                  player_detections)
-        print("\n\n----------------------------------------\n\n")
         if 'a' in frame_inputs[i: i + sliding_window]:
             clip_path = _DIR.VIDEO_CLIPS_DIR + folder_type + "A/" + base_name + str(i) + ".mp4"
             track_clip_path = "cropped_video_clips_pos/" + folder_type + "A/" + base_name + str(i) + ".pkl"
@@ -124,7 +123,7 @@ def create_data(video_frames, frame_inputs, sliding_window=8, base_name="", stri
             clip_path = _DIR.VIDEO_CLIPS_DIR + "val/" + "A/" + base_name + str(i) + ".mp4"
             clip_label.append((base_name + str(i), 'a'))
         elif 'b' in frame_inputs[i: i + sliding_window]:
-            clip_path = _DIR.VIDEO_CLIPS_DIR + "val/" + "B/" + base_name + str(i) + ".mp4"
+            clip_path = _DIR.VIDEO_CLIPS_DIR + "val/" +                  "B/" + base_name + str(i) + ".mp4"
             clip_label.append((base_name + str(i), 'b'))
         else:
             clip_path = _DIR.VIDEO_CLIPS_DIR + "val/" + "None/" + base_name + str(i) + ".mp4"
@@ -157,14 +156,14 @@ if __name__ == "__main__":
         f_ac = correct_first_detect(fp)
         # f_ac = add_classes(fp)
         _name = f"{match_}_{no_}"
-        player_detections = player_tracker.detect_frames(input_video_frames)
+        player_detections = player_tracker.detect_frames(input_video_frames, True, stub_path=f"local_stub/{_name}.pkl")
         with open("../court_detector/keycheckpoint/court_points4_5avg.pkl", 'rb') as f:
             court_points = pickle.load(f)
         kpts = court_points[int(match_[5:]) - 1]
         avg_x, avg_y = map(lambda v: sum(v) / len(kpts), zip(*kpts))
         print(avg_x, avg_y)
         player_detections = player_tracker.choose_and_filter_players((avg_x, avg_y + 100), player_detections)
-        create_data_with_serve(input_video_frames, f_ac, 8, _name, 5, pt=player_detections, id_=int(match_[5:]))
+        create_data_with_serve(input_video_frames, f_ac, 16, _name, 16, pt=player_detections, id_=int(match_[5:]))
     # no_ = "1_01_00"
     # _name = f"match1_{no_}"
     # input_video_frames = read_video("{x}Professional/match1/video/{no}.mp4".format(x=_DIR.INPUT_DIR, no=no_))

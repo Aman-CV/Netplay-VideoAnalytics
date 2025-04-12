@@ -74,11 +74,12 @@ class PlayerTracker:
         for box in results.boxes:
             if box is None or box.id is None:
                 continue
+            cnf = box.conf.item()
             track_id = int(box.id.tolist()[0])
             result = box.xyxy.tolist()[0]
             object_cls_id = box.cls.tolist()[0]
             object_cls_name = id_name_dict[object_cls_id]
-            if object_cls_name == "person":
+            if object_cls_name == "person" and cnf > 0.6:
                 player_dict[track_id] = result
         return player_dict
 

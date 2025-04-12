@@ -10,6 +10,7 @@ from utils import expand_bbox
 from utils import read_video as rv
 import numpy as np
 from trackers import PlayerTracker
+import torchvision
 _DIR = Directories()
 
 class HitFrameDetector:
@@ -19,16 +20,27 @@ class HitFrameDetector:
         self.num_classes = 2
         self.model_a.blocks[-1].proj = nn.Linear(in_features=2048, out_features=self.num_classes)
         c = torch.load(model_path_a)
-        self.model_a.load_state_dict(c["model_state_dict"])
+        try:
+            self.model_a.load_state_dict(c["model_state_dict"])
+        except KeyError as e:
+            self.model_a.load_state_dict(c)
         self.model_a.cuda()
         self.model_a.eval()  # Set the model to evaluation mode
         self.model_b = x3d_m(pretrained=False)
         self.num_classes = 2
         self.model_b.blocks[-1].proj = nn.Linear(in_features=2048, out_features=self.num_classes)
         c = torch.load(model_path_b)
-        self.model_b.load_state_dict(c["model_state_dict"])
+        try:
+            self.model_b.load_state_dict(c["model_state_dict"])
+        except KeyError as e:
+            self.model_b.load_state_dict(c)
         self.model_b.cuda()
         self.model_b.eval()
+
+        self.model_x = torchvision.models.video.r3d_18(pretrained=False)
+        self.model_x.fc = nn.Linear(self.model_x.fc.in_features, 2)  # Assuming 2 classes
+        self.model_x.load_state_dict(torch.load("C:/Users/AmanGautam/Downloads/random_r18_epoch4.pth", map_location='cpu'))  # Update path
+        self.model_x.eval()
 
     def inference(self, video_path):
         video, _, _ = read_video(video_path, pts_unit='sec')
@@ -69,16 +81,19 @@ class HitFrameDetector:
             video = video.unsqueeze(0).cuda()  # Add batch dimension and move to GPU
             video = video.permute(0, 2, 1, 3, 4)  # [batch_size, channels, num_frames, height, width]
             with torch.no_grad():
-                if index == 0: outputs = self.model_a(video)
+                if index == 0:
+                    outputs = self.model_a(video)
                 else: outputs = self.model_b(video)
                 predictions = torch.argmax(outputs, dim=1)
             preds.append(predictions.item())
+        print(preds)
         return preds  # Return the predicted class index
 
     def get_hiframes(self, video_frames, player_detections, read_from_stub=False, stub_path=None):
         inference_output = []
         sliding_window = 8
-        for i in range(0, len(video_frames)):
+        stride = 5
+        for i in range(0, len(video_frames), stride):
             if i + sliding_window > len(video_frames): break
             clip = video_frames[i: i + sliding_window]
             player_detections_clip = player_detections[i: i + sliding_window]
@@ -88,26 +103,25 @@ class HitFrameDetector:
                 flag = 0
             elif res == [1, 0]:
                 flag = 1
-            inference_output.append(flag)
+            inference_output.append([flag, i])
         refined_inference = [(-1, -1)]
-        stride = 5
-        for i in range(0, len(inference_output), stride):
-            if i + sliding_window > len(inference_output): break
-            clip = inference_output[i: i + sliding_window]
-            a, b, none_ = clip.count(0), clip.count(1), clip.count(2)
-            if a > 4:
-                if refined_inference[-1][0] != 0: refined_inference.append([0, i])
-            elif b > 4:
-                if refined_inference[-1][0] != 1: refined_inference.append([1, i])
+        # for i in range(0, len(inference_output), stride):
+        #     if i + sliding_window > len(inference_output): break
+        #     clip = inference_output[i: i + sliding_window]
+        #     a, b, none_ = clip.count(0), clip.count(1), clip.count(2)
+        #     if a > 2:
+        #         if refined_inference[-1][0] != 0: refined_inference.append([0, i])
+        #     elif b > 2:
+        #         if refined_inference[-1][0] != 1: refined_inference.append([1, i])
         # print(refined_inference)
-
-        # for (a, b), fr in inference_output:
-        #     if a == 0:
-        #         if refined_inference[-1][0] != 0:
-        #             refined_inference.append([0, fr])
-        #     elif b == 0:
-        #         if refined_inference[-1][0] != 1:
-        #             refined_inference.append([1, fr])
+        print(inference_output)
+        for p, fr in inference_output:
+            if p == 0:
+                if refined_inference[-1][0] != 0:
+                    refined_inference.append([0, fr])
+            elif p == 1:
+                if refined_inference[-1][0] != 1:
+                    refined_inference.append([1, fr])
         inference_output = refined_inference[1:]
 
         return inference_output
@@ -130,7 +144,8 @@ if __name__ == "__main__":
 
     input_video_path = "C:/Users/AmanGautam/PycharmProjects/BadmintonCoachAI/input_videos/Test/match3/video/1_02_00.mp4"
 
-    hfd = HitFrameDetector(_DIR.MODEL_DIR + "last_3_A.pth", _DIR.MODEL_DIR + "last_5_B.pth")
+    hfd = HitFrameDetector("C:/Users/AmanGautam/Downloads/best.pth", _DIR.MODEL_DIR + "last_5_B.pth")
+
 
     player_tracker = PlayerTracker("{x}yolo11x.pt".format(x=_DIR.MODEL_DIR))
     vf = rv(input_video_path)
@@ -143,8 +158,8 @@ if __name__ == "__main__":
     kpts = court_points[1]
     avg_x, avg_y = map(lambda v: sum(v) / len(kpts), zip(*kpts))
     kpts.append((avg_x, avg_y))
-    pd = player_tracker.choose_and_filter_players((avg_x, avg_y + 100), pd)
-    # pd = player_tracker.choose_and_filter_players([640, 360], pd)
+    pd = player_tracker.choose_and_filter_players([640, 460], pd)
+    # pd = player_tracker.choose_and_filter_players([640, 460], pd)
     real_hit_frame = [16, 79, 97, 119, 152, 179, 212, 237, 269, 300, 337, 366, 398, 427, 452, 476, 501, 529, 564, 582, 617, 637]
     rhf = [((i + 1) % 2, hit) for i, hit in enumerate(real_hit_frame)]
     print(rhf, len(real_hit_frame))
